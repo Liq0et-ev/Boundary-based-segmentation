@@ -5,7 +5,7 @@ URL_3 = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transpare
 ROBERTS_THRESHOLD = 60
 CANNY_LOW         = 50
 CANNY_HIGH        = 150
-NOISE_AMOUNT      = 0.05
+NOISE_AMOUNT      = 40
 
 import cv2
 import numpy as np
@@ -30,19 +30,10 @@ def load_image_color_from_url(url):
     return np.array(img, dtype=np.uint8)
 
 
-def add_salt_pepper_noise(img, amount=0.05):
-    noisy = img.copy()
-    total = img.size // (img.shape[2] if img.ndim == 3 else 1)
-    n_salt   = int(total * amount / 2)
-    n_pepper = int(total * amount / 2)
-
-    coords = [np.random.randint(0, dim, n_salt) for dim in img.shape[:2]]
-    noisy[coords[0], coords[1]] = 255
-
-    coords = [np.random.randint(0, dim, n_pepper) for dim in img.shape[:2]]
-    noisy[coords[0], coords[1]] = 0
-
-    return noisy
+def add_gaussian_noise(img, amount=40):
+    noise = np.random.normal(0, amount, img.shape)
+    noisy = np.clip(img.astype(np.float32) + noise, 0, 255)
+    return noisy.astype(np.uint8)
 
 
 def roberts_edge_detection(img, threshold=60):
@@ -73,8 +64,8 @@ if URL_2.strip():
     img2_color = load_image_color_from_url(URL_2)
     img2       = np.array(Image.fromarray(img2_color).convert("L"), dtype=np.uint8)
 else:
-    img2_color = add_salt_pepper_noise(img1_color, NOISE_AMOUNT)
-    img2       = add_salt_pepper_noise(img1, NOISE_AMOUNT)
+    img2_color = add_gaussian_noise(img1_color, NOISE_AMOUNT)
+    img2       = add_gaussian_noise(img1, NOISE_AMOUNT)
 
 img3_color = load_image_color_from_url(URL_3)
 img3       = np.array(Image.fromarray(img3_color).convert("L"), dtype=np.uint8)

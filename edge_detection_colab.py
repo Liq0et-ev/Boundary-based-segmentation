@@ -16,7 +16,7 @@ URL_3 = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transpare
 ROBERTS_THRESHOLD = 60   # Slieksnis Roberts operatoram (0–255)
 CANNY_LOW         = 50   # Canny zemākais slieksnis
 CANNY_HIGH        = 150  # Canny augstākais slieksnis
-NOISE_AMOUNT      = 0.05 # Sāls & piparu trokšņa intensitāte (0.0–1.0, t.i. % bojāto pikseļu)
+NOISE_AMOUNT      = 40   # Gausa trokšņa intensitāte — standartnovirze σ (0–255)
 # -----------------------------------------------------------------------
 
 
@@ -48,26 +48,15 @@ def load_image_color_from_url(url: str) -> np.ndarray:
     return np.array(img, dtype=np.uint8)
 
 
-def add_salt_pepper_noise(img: np.ndarray, amount: float = 0.05) -> np.ndarray:
+def add_gaussian_noise(img: np.ndarray, amount: int = 40) -> np.ndarray:
     """
-    Pievieno sāls un piparu troksni attēlam.
-    amount — bojāto pikseļu daļa (0.0–1.0), pēc noklusējuma 5%.
+    Pievieno Gausa troksni attēlam.
+    amount — standartnovirze σ; lielāka vērtība = vairāk trokšņa.
     Darbojas ar pelēktoņu un krāsu attēliem.
     """
-    noisy = img.copy()
-    total = img.size // (img.shape[2] if img.ndim == 3 else 1)
-    n_salt   = int(total * amount / 2)
-    n_pepper = int(total * amount / 2)
-
-    # Sāls (balti pikseļi)
-    coords = [np.random.randint(0, dim, n_salt) for dim in img.shape[:2]]
-    noisy[coords[0], coords[1]] = 255
-
-    # Pipari (melni pikseļi)
-    coords = [np.random.randint(0, dim, n_pepper) for dim in img.shape[:2]]
-    noisy[coords[0], coords[1]] = 0
-
-    return noisy
+    noise = np.random.normal(0, amount, img.shape)
+    noisy = np.clip(img.astype(np.float32) + noise, 0, 255)
+    return noisy.astype(np.uint8)
 
 
 # ── 3. Roberts operators (BEZ iebūvētām bibliotēku metodēm) ─────────────
@@ -127,9 +116,9 @@ if URL_2.strip():
     img2       = np.array(Image.fromarray(img2_color).convert("L"), dtype=np.uint8)
     print(f"  Attēls 2 ielādēts no URL: {img2.shape}")
 else:
-    img2_color = add_salt_pepper_noise(img1_color, NOISE_AMOUNT)
-    img2       = add_salt_pepper_noise(img1, NOISE_AMOUNT)
-    print(f"  Attēls 2: trokšņains variants no Attēla 1 (sāls & pipari {NOISE_AMOUNT*100:.1f}%)")
+    img2_color = add_gaussian_noise(img1_color, NOISE_AMOUNT)
+    img2       = add_gaussian_noise(img1, NOISE_AMOUNT)
+    print(f"  Attēls 2: trokšņains variants no Attēla 1 (Gausa σ={NOISE_AMOUNT})")
 
 img3_color = load_image_color_from_url(URL_3)
 img3       = np.array(Image.fromarray(img3_color).convert("L"), dtype=np.uint8)
