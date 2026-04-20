@@ -9,7 +9,7 @@ Realizē **Canny** un **Roberts** malu detektēšanas algoritmus uz trim attēli
 
 - [Uzdevuma apraksts](#uzdevuma-apraksts)
 - [Izmantotās metodes](#izmantotās-metodes)
-  - [Sāls un piparu troksnis](#sāls-un-piparu-troksnis)
+  - [Gausa troksnis](#gausa-troksnis)
   - [Canny malu detektors](#canny-malu-detektors)
   - [Roberts operators](#roberts-operators)
 - [Koda struktūra](#koda-struktūra)
@@ -39,17 +39,16 @@ Rezultāts — atskaite ar 4 kolonnām katram attēlam:
 
 ## Izmantotās metodes
 
-### Sāls un piparu troksnis
+### Gausa troksnis
 
-**Salt & Pepper** troksnis simulē sensoru bojājumus — daļa pikseļu nejauši kļūst pilnīgi balti (255) vai pilnīgi melni (0).
+**Gaussian noise** — katram pikselim tiek pieskaitīta nejauša vērtība no normālsadalījuma ar vidējo 0 un standartnovirzi σ.
 
 ```
-Bojāto pikseļu skaits = kopējais pikseļu skaits × amount
-  → puse = sāls  (vērtība 255)
-  → puse = pipari (vērtība 0)
+troksnis ~ N(0, σ)
+pikselis_jauns = clip(pikselis + troksnis, 0, 255)
 ```
 
-Parametrs `NOISE_AMOUNT = 0.05` nozīmē 5% bojātu pikseļu.
+Parametrs `NOISE_AMOUNT = 40` nosaka standartnovirzi σ — lielāka vērtība = intensīvāks troksnis.
 
 ---
 
@@ -145,7 +144,7 @@ edge_detection_colab.py
 |----------|-----------|----------|
 | `load_image_from_url(url)` | `urllib`, `PIL` | Ielādē attēlu no URL pelēktoņos |
 | `load_image_color_from_url(url)` | `urllib`, `PIL` | Ielādē attēlu no URL RGB formātā |
-| `add_salt_pepper_noise(img, amount)` | `numpy` | Pievieno sāls & piparu troksni |
+| `add_gaussian_noise(img, amount)` | `numpy` | Pievieno Gausa troksni (σ=amount) |
 | `roberts_edge_detection(img, threshold)` | `numpy` | **Manuāls** Roberts operators |
 | `cv2.Canny(img, low, high)` | `opencv-python` | Canny malu detektors |
 | `Image.open().convert()` | `PIL` | Attēla formāta konvertēšana |
